@@ -5,7 +5,7 @@ Features:
 . Zips the backup files for efficient storage
 . Uploads the backup zip file to a designated GCS bucket
 . Optionally sends an email with the log file attached
-. Deletes backups older than a specified retention period (commented out)
+. Deletes backups older than a specified retention period
 
 Requirements:
 . *Linux/Unix-based* system
