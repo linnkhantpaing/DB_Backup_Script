@@ -1,45 +1,61 @@
-This script automates the process of backing up your MySQL databases and uploading them to Google Cloud Storage (GCS).
+# MySQL Automated Backup to Google Cloud Storage
 
-Features:
-. Backs up individual databases specified by the script
-. Zips the backup files for efficient storage
-. Uploads the backup zip file to a designated GCS bucket
-. Optionally sends an email with the log file attached
-. Deletes backups older than a specified retention period
+This script automates the backup of MySQL databases and uploads the compressed backup to **Google Cloud Storage (GCS)**. It also sends a log email and cleans up old backups based on a retention policy.
+## 📊 Large-Scale Database Support
 
-Requirements:
-. *Linux/Unix-based* system
-. *mysql* client installed
-. *zip* and *gsutil* commands installed
-. Google Cloud Storage account with appropriate permissions
-. A JSON key file for your GCS service account
+This script supports backing up **100+ MySQL databases**. To improve performance and reliability:
 
-Configuration:
-Edit the following variables at the beginning of the script:
-. *USER*: Your MySQL username
-. *PASSWORD*: Your MySQL password (store securely!)
-. *BACKUP_DIR*: Path to the directory for storing backups
-. *DAYS_TO_KEEP*: Number of days to retain backups (currently commented out)
-. *BUCKET_NAME*: The name of your Google Cloud Storage bucket
-. *JSON_KEY_FILE*: Path to your GCS service account JSON key file
-. *START_CONNECTION_COMMAND*: Command to start any connection process needed before backup (optional)
-. *REVOKE_CONNECTION_COMMAND*: Command to undo the connection process (optional)
-. *Email_Address*: Email address to receive backup log notification (optional)
+- Uses a loop to individually dump each database.
+- Skips system databases like `information_schema`, `performance_schema`, etc.
+- For high-performance environments:
+  - Consider **parallel dumping** (requires high CPU/disk I/O).
+  - Use `--single-transaction` to minimize locking (InnoDB only).
+- Output is individually stored per database to aid in debugging or restoring specific databases.
+- Each database's backup status is logged for traceability.
 
-Instructions:
-1. Update the configuration variables in the script.
-2. Make sure the script has execute permissions: *chmod +x backup_script.sh*
-3. Run the script: *./backup_script.sh*
+> 💡 Note: Make sure your storage volume has enough space before running the script. Compressed `.zip` files help reduce total storage usage.
 
-Log File:
-The script outputs all actions and messages to a log file located at $BACKUP_DIR/backup_log.txt.
+## 📌 Features
 
-Email Notification (Optional):
-If you provide an email address, the script will send an email with the log file attached when the backup process is complete.
+- Dumps all MySQL databases except system ones (`mysql`, `sys`, etc.)
+- Compresses the backup
+- Uploads to Google Cloud Storage
+- Retains backups for a defined number of days
+- Sends a backup status log via email
+- Custom connection logic (start/revoke hooks)
 
-Security:
-Do not store your MySQL password directly in the script! Consider environment variables or a secure key management solution.
-Ensure your GCS service account has the necessary permissions for uploading to the specified bucket.
+## 🛠️ Requirements
 
-Disclaimer:
-This script is provided for informational purposes only. You are responsible for ensuring the script meets your specific needs and security requirements.
+- `bash` (Linux/Unix-based system)
+- MySQL client tools (`mysql`, `mysqldump`)
+- `gcloud` CLI installed and configured
+- `gsutil` CLI (comes with `gcloud`)
+- A GCP Service Account with `Storage Object Admin` role
+- Mail command-line utility (`mail`, `mailx`, etc.)
+- Permissions to execute the script and access GCS
+
+## 🔐 Google Cloud Setup
+
+1. Create a service account in your GCP project.
+2. Grant it the `Storage Object Admin` role.
+3. Generate a **JSON key** for the account.
+4. Download the JSON key and save it to the server.
+5. Make sure your GCS bucket exists and is accessible by the service account.
+
+## 🧾 Script Configuration
+
+Edit the script variables:
+
+```bash
+USER="your_mysql_username"
+PASSWORD="your_mysql_password"
+BACKUP_DIR="/absolute/path/to/backup/directory"
+DAYS_TO_KEEP=180
+
+BUCKET_NAME="your_gcs_bucket_name"
+JSON_KEY_FILE="/absolute/path/to/your-key-file.json"
+
+START_CONNECTION_COMMAND="command_to_start_connection"
+REVOKE_CONNECTION_COMMAND="command_to_revoke_connection"
+
+EMAIL="you@example.com"
